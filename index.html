@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="TimeBank" />
+  <meta name="description" content="A compact UPT and PTO leave-time calculator." />
+  <title>TimeBank — UPT & PTO Calculator</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <h1>TimeBank</h1>
+        <p>UPT & PTO calculator</p>
+      </div>
+      <button id="shareBtn" class="round-button" type="button" aria-label="Share TimeBank">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m0 0 4 4m-4-4L8 7M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
+      </button>
+    </header>
+
+    <main>
+      <section class="card calculator-card">
+        <div class="segmented" role="tablist" aria-label="Calculator mode">
+          <button id="modeEarliest" class="segment active" type="button" data-mode="earliest">Earliest I can leave</button>
+          <button id="modeDesired" class="segment" type="button" data-mode="desired">I want to leave at</button>
+        </div>
+
+        <div id="desiredWrap" class="desired-wrap hidden">
+          <label class="field compact-field">
+            <span>Desired leave time</span>
+            <input id="desiredLeave" type="time" value="01:00" />
+          </label>
+        </div>
+
+        <div class="section-title-row">
+          <div>
+            <h2>Time balances</h2>
+            <p>Turn on only the time types you want to use.</p>
+          </div>
+        </div>
+
+        <div class="balance-list">
+          <div class="balance-item" data-kind="upt">
+            <label class="toggle-line">
+              <span class="toggle-copy"><i class="color-dot upt"></i><span><strong>UPT</strong><small>15-minute blocks</small></span></span>
+              <input id="enableUpt" class="switch" type="checkbox" checked />
+            </label>
+            <div id="uptInputs" class="balance-inputs">
+              <label><input id="uptHours" type="number" min="0" max="80" inputmode="numeric" value="0" /><span>hr</span></label>
+              <label><input id="uptMinutes" type="number" min="0" max="59" inputmode="numeric" value="0" /><span>min</span></label>
+            </div>
+          </div>
+
+          <div class="balance-item" data-kind="flex">
+            <label class="toggle-line">
+              <span class="toggle-copy"><i class="color-dot flex"></i><span><strong>Flexible PTO</strong><small>Exact-minute use</small></span></span>
+              <input id="enableFlex" class="switch" type="checkbox" />
+            </label>
+            <div id="flexInputs" class="balance-inputs hidden">
+              <label><input id="flexHours" type="number" min="0" inputmode="numeric" value="0" /><span>hr</span></label>
+              <label><input id="flexMinutes" type="number" min="0" max="59" inputmode="numeric" value="0" /><span>min</span></label>
+            </div>
+          </div>
+
+          <div class="balance-item" data-kind="standard">
+            <label class="toggle-line">
+              <span class="toggle-copy"><i class="color-dot standard"></i><span><strong>Standard PTO</strong><small>Exact-minute use</small></span></span>
+              <input id="enableStandard" class="switch" type="checkbox" />
+            </label>
+            <div id="standardInputs" class="balance-inputs hidden">
+              <label><input id="standardHours" type="number" min="0" inputmode="numeric" value="0" /><span>hr</span></label>
+              <label><input id="standardMinutes" type="number" min="0" max="59" inputmode="numeric" value="0" /><span>min</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="section-title-row shift-heading">
+          <div>
+            <h2>Shift</h2>
+            <p id="shiftSummary">6:15 PM → 4:45 AM · 10 hr worked</p>
+          </div>
+          <button id="editShiftBtn" class="link-button" type="button">Edit</button>
+        </div>
+
+        <div id="shiftEditor" class="inline-editor hidden">
+          <div class="two-col">
+            <label class="field"><span>Start</span><input id="shiftStart" type="time" value="18:15" /></label>
+            <label class="field"><span>End</span><input id="shiftEnd" type="time" value="04:45" /></label>
+          </div>
+          <div class="lunch-row">
+            <label class="field"><span>Lunch starts</span><input id="lunchStart" type="time" value="23:00" /></label>
+            <div class="fixed-lunch"><span>Lunch</span><strong>30 min</strong></div>
+          </div>
+          <p class="microcopy">Lunch is always treated as an unpaid 30-minute break.</p>
+          <button id="doneShiftBtn" class="secondary-button" type="button">Done</button>
+        </div>
+
+        <details id="optionsMenu" class="menu-card">
+          <summary>
+            <span><strong>Options</strong><small>Time priority & saving</small></span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          </summary>
+          <div class="menu-content">
+            <label class="field">
+              <span>Time use priority</span>
+              <select id="priority">
+                <option value="save_upt">Use paid time first — save UPT</option>
+                <option value="save_pto">Use UPT first — save PTO</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Paid time order</span>
+              <select id="ptoOrder">
+                <option value="flex_first">Flexible PTO first</option>
+                <option value="standard_first">Standard PTO first</option>
+              </select>
+            </label>
+
+            <label class="toggle-line save-line">
+              <span class="toggle-copy"><span><strong>Save times & balances</strong><small>Remember your entries on this device.</small></span></span>
+              <input id="saveEntries" class="switch" type="checkbox" />
+            </label>
+          </div>
+        </details>
+
+        <button id="calculateBtn" class="primary-button" type="button">Calculate</button>
+      </section>
+
+      <section id="resultCard" class="result-card hidden" aria-live="polite">
+        <div class="result-kicker" id="resultKicker">Earliest you can leave</div>
+        <div class="result-time" id="resultTime">—</div>
+        <p id="resultMessage">Enter your balances and calculate.</p>
+
+        <div class="result-details">
+          <div><span>Time needed</span><strong id="resultNeeded">—</strong></div>
+          <div><span>UPT used</span><strong id="resultUpt">—</strong></div>
+          <div><span>Flexible PTO</span><strong id="resultFlex">—</strong></div>
+          <div><span>Standard PTO</span><strong id="resultStandard">—</strong></div>
+        </div>
+
+        <div id="resultExtra" class="result-extra"></div>
+      </section>
+
+      <details class="tool-card">
+        <summary>
+          <span>
+            <span class="tool-icon">↗</span>
+            <span><strong>UPT prediction</strong><small>Estimate UPT from one shift</small></span>
+          </span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </summary>
+        <div class="tool-content">
+          <div class="two-col">
+            <label class="field"><span>Start time</span><input id="predictStart" type="time" value="18:15" /></label>
+            <label class="field"><span>End / leave time</span><input id="predictEnd" type="time" value="04:45" /></label>
+          </div>
+          <div id="predictionLunch" class="prediction-lunch">Lunch: <strong>11:00 PM–11:30 PM</strong> · 30 min unpaid</div>
+          <button id="predictBtn" class="secondary-button" type="button">Predict UPT</button>
+          <div id="predictionResult" class="mini-result hidden">
+            <div><span>Worked</span><strong id="predictWorked">—</strong></div>
+            <div><span>UPT earned</span><strong id="predictEarned">—</strong></div>
+          </div>
+          <p id="predictionNote" class="microcopy"></p>
+        </div>
+      </details>
+
+      <details class="tool-card">
+        <summary>
+          <span>
+            <span class="tool-icon">15</span>
+            <span><strong>15-minute UPT checker</strong><small>Check a late clock-in</small></span>
+          </span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </summary>
+        <div class="tool-content">
+          <label class="field"><span>Actual clock-in</span><input id="actualClockIn" type="time" value="18:21" /></label>
+          <button id="lateBtn" class="secondary-button" type="button">Check UPT</button>
+          <div id="lateResult" class="mini-result hidden">
+            <div><span>Missed work</span><strong id="lateBy">—</strong></div>
+            <div><span>UPT charge</span><strong id="lateCharge">—</strong></div>
+          </div>
+          <p id="lateNote" class="microcopy"></p>
+        </div>
+      </details>
+    </main>
+
+    <footer>
+      Unofficial planning tool. Your employer's timekeeping system is the final source of truth.
+    </footer>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="./app.js"></script>
+</body>
+</html>
