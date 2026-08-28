@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Time Calculator" />
+  <meta name="description" content="UPT and PTO leave-time calculator with shift, lunch, grace, and MET rules." />
+  <title>Time Calculator — UPT & PTO</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <h1>Time Calculator</h1>
+        <p>UPT & PTO leave planner</p>
+      </div>
+      <div class="top-actions">
+        <label class="theme-toggle" aria-label="Dark mode">
+          <input id="themeToggle" type="checkbox" />
+          <span><i>☀️</i><b></b><i>🌙</i></span>
+        </label>
+        <button id="shareBtn" class="round-button" type="button" aria-label="Share Time Calculator">
+          <svg viewBox="0 0 24 24"><path d="M12 16V3m0 0 4 4m-4-4L8 7M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="card calculator-card">
+        <div class="segmented" role="tablist" aria-label="Calculator mode">
+          <button id="modeEarliest" class="segment active" type="button">Earliest I can leave</button>
+          <button id="modeDesired" class="segment" type="button">I want to leave at</button>
+        </div>
+
+        <div id="desiredWrap" class="desired-wrap hidden">
+          <label class="field compact-field">
+            <span>Desired leave time</span>
+            <input id="desiredLeave" type="time" value="02:45" />
+          </label>
+          <p class="microcopy">Time off never moves your actual EOS or its grace window.</p>
+        </div>
+
+        <div class="section-title-row">
+          <div><h2>Time balances</h2><p>Turn on only the balances you want available.</p></div>
+        </div>
+
+        <div class="balance-list">
+          <div class="balance-item">
+            <label class="toggle-line">
+              <span class="toggle-copy"><i class="color-dot upt"></i><span><strong>UPT</strong><small>15-minute blocks</small></span></span>
+              <input id="enableUpt" class="switch" type="checkbox" checked />
+            </label>
+            <div id="uptInputs" class="balance-inputs">
+              <label><input id="uptHours" type="number" min="0" max="80" inputmode="numeric" value="0" /><span>hr</span></label>
+              <label><input id="uptMinutes" type="number" min="0" max="59" inputmode="numeric" value="0" /><span>min</span></label>
+            </div>
+          </div>
+
+          <div class="balance-item">
+            <label class="toggle-line">
+              <span class="toggle-copy"><i class="color-dot flex"></i><span><strong>Flexible PTO</strong><small>Exact-minute use</small></span></span>
+              <input id="enableFlex" class="switch" type="checkbox" />
+            </label>
+            <div id="flexInputs" class="balance-inputs hidden">
+              <label><input id="flexHours" type="number" min="0" inputmode="numeric" value="0" /><span>hr</span></label>
+              <label><input id="flexMinutes" type="number" min="0" max="59" inputmode="numeric" value="0" /><span>min</span></label>
+            </div>
+          </div>
+
+          <div class="balance-item">
+            <label class="toggle-line">
+              <span class="toggle-copy"><i class="color-dot standard"></i><span><strong>Standard PTO</strong><small>Exact-minute use</small></span></span>
+              <input id="enableStandard" class="switch" type="checkbox" />
+            </label>
+            <div id="standardInputs" class="balance-inputs hidden">
+              <label><input id="standardHours" type="number" min="0" inputmode="numeric" value="0" /><span>hr</span></label>
+              <label><input id="standardMinutes" type="number" min="0" max="59" inputmode="numeric" value="0" /><span>min</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="section-title-row shift-heading">
+          <div>
+            <h2>Actual schedule</h2>
+            <p id="shiftSummary">6:15 PM → 4:45 AM · Lunch 11:00–11:30 PM</p>
+          </div>
+          <button id="editShiftBtn" class="link-button" type="button">Edit</button>
+        </div>
+        <div id="graceSummary" class="grace-strip">SOS 6:10–6:20 · Lunch ±3 min · EOS 4:40–4:50</div>
+
+        <div id="shiftEditor" class="inline-editor hidden">
+          <div class="two-col">
+            <label class="field"><span>Scheduled start</span><input id="shiftStart" type="time" value="18:15" /></label>
+            <label class="field"><span>Scheduled EOS</span><input id="shiftEnd" type="time" value="04:45" /></label>
+          </div>
+          <div class="two-col editor-toggles">
+            <label class="mini-toggle-card"><span><strong>Grace periods</strong><small>SOS/EOS ±5 · Lunch ±3</small></span><input id="graceEnabled" class="switch" type="checkbox" checked /></label>
+            <label class="mini-toggle-card"><span><strong>MET</strong><small>Add exactly +1 hr to EOS</small></span><input id="metEnabled" class="switch" type="checkbox" /></label>
+          </div>
+          <div class="lunch-row">
+            <label class="field"><span>Scheduled lunch start</span><input id="lunchStart" type="time" value="23:00" /></label>
+            <div class="fixed-lunch"><span>Scheduled lunch</span><strong id="lunchDisplay">11:00–11:30 PM</strong><small>30 min unpaid</small></div>
+          </div>
+          <p class="microcopy">PTO/UPT never changes SOS, lunch, EOS, or grace windows. MET changes the actual EOS by +1 hour.</p>
+          <button id="doneShiftBtn" class="secondary-button" type="button">Done</button>
+        </div>
+
+        <details class="menu-card">
+          <summary><span><strong>Options</strong><small>Balance protection & saving</small></span><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></summary>
+          <div class="menu-content">
+            <label class="field">
+              <span>Protect this balance</span>
+              <select id="protectBalance">
+                <option value="upt">Save UPT</option>
+                <option value="flex">Save Flexible PTO</option>
+                <option value="standard">Save Standard PTO</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Paid time order</span>
+              <select id="ptoOrder">
+                <option value="flex_first">Flexible PTO first</option>
+                <option value="standard_first">Standard PTO first</option>
+              </select>
+            </label>
+            <label class="toggle-line save-line">
+              <span class="toggle-copy"><span><strong>Save times & balances</strong><small>Remember entries on this device.</small></span></span>
+              <input id="saveEntries" class="switch" type="checkbox" />
+            </label>
+          </div>
+        </details>
+
+        <button id="calculateBtn" class="primary-button" type="button">Calculate</button>
+      </section>
+
+      <section id="resultCard" class="result-card hidden" aria-live="polite">
+        <div class="result-kicker" id="resultKicker">Earliest you can leave</div>
+        <div class="result-time" id="resultTime">—</div>
+        <p id="resultMessage"></p>
+        <div class="result-details">
+          <div><span>Exact time requiring coverage</span><strong id="resultNeeded">—</strong></div>
+          <div><span>Total time charged/used</span><strong id="resultUsed">—</strong></div>
+          <div><span>UPT used</span><strong id="resultUpt">—</strong></div>
+          <div><span>Flexible PTO</span><strong id="resultFlex">—</strong></div>
+          <div><span>Standard PTO</span><strong id="resultStandard">—</strong></div>
+          <div><span>Grace</span><strong id="resultGrace">—</strong></div>
+        </div>
+        <div id="resultExtra" class="result-extra"></div>
+      </section>
+
+      <details class="tool-card">
+        <summary><span><span class="tool-icon">↗</span><span><strong>UPT prediction</strong><small>Uses actual clocked-in work time</small></span></span><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></summary>
+        <div class="tool-content">
+          <div class="two-col">
+            <label class="field"><span>Actual clock-in</span><input id="predictStart" type="time" value="18:15" /></label>
+            <label class="field"><span>Final clock-out</span><input id="predictEnd" type="time" value="04:45" /></label>
+          </div>
+          <label class="mini-toggle-card single-toggle"><span><strong>I took lunch</strong><small>Subtract your actual off-clock lunch time</small></span><input id="predictLunchEnabled" class="switch" type="checkbox" checked /></label>
+          <div id="predictLunchFields" class="two-col">
+            <label class="field"><span>Lunch out</span><input id="predictLunchOut" type="time" value="23:00" /></label>
+            <label class="field"><span>Lunch in</span><input id="predictLunchIn" type="time" value="23:30" /></label>
+          </div>
+          <button id="predictBtn" class="secondary-button" type="button">Predict UPT</button>
+          <div id="predictionResult" class="mini-result hidden">
+            <div><span>Actual work</span><strong id="predictWorked">—</strong></div>
+            <div><span>UPT earned</span><strong id="predictEarned">—</strong></div>
+          </div>
+          <p id="predictionNote" class="microcopy"></p>
+        </div>
+      </details>
+
+      <details class="tool-card">
+        <summary><span><span class="tool-icon">✓</span><span><strong>Attendance & grace checker</strong><small>SOS, lunch, EOS, and UPT estimate</small></span></span><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></summary>
+        <div class="tool-content">
+          <div class="two-col">
+            <label class="field"><span>Actual clock-in</span><input id="actualClockIn" type="time" value="18:15" /></label>
+            <label class="field"><span>Final clock-out</span><input id="actualClockOut" type="time" value="04:45" /></label>
+          </div>
+          <label class="mini-toggle-card single-toggle"><span><strong>I took lunch</strong><small>Check the ±3-minute lunch grace</small></span><input id="attendanceLunchEnabled" class="switch" type="checkbox" checked /></label>
+          <div id="attendanceLunchFields" class="two-col">
+            <label class="field"><span>Lunch out</span><input id="actualLunchOut" type="time" value="23:00" /></label>
+            <label class="field"><span>Lunch in</span><input id="actualLunchIn" type="time" value="23:30" /></label>
+          </div>
+          <button id="attendanceBtn" class="secondary-button" type="button">Check attendance</button>
+          <div id="attendanceResult" class="mini-result attendance-grid hidden">
+            <div><span>SOS gap</span><strong id="startGap">—</strong></div>
+            <div><span>Lunch gap</span><strong id="lunchGap">—</strong></div>
+            <div><span>EOS gap</span><strong id="endGap">—</strong></div>
+            <div><span>Total uncovered</span><strong id="totalGap">—</strong></div>
+            <div class="wide"><span>Estimated UPT if UPT covers the total</span><strong id="attendanceUpt">—</strong></div>
+          </div>
+          <p id="attendanceNote" class="microcopy"></p>
+        </div>
+      </details>
+    </main>
+
+    <footer>Unofficial planning tool. Your employer's timekeeping system is the final source of truth.</footer>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="./app.js"></script>
+</body>
+</html>
